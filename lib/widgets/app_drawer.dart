@@ -11,18 +11,23 @@ class AppDrawer extends StatelessWidget {
     required this.onHome,
     required this.onOrders,
     required this.onProfile,
+    required this.onLogin,
     required this.onLogout,
   });
 
   final VoidCallback onHome;
   final VoidCallback onOrders;
   final VoidCallback onProfile;
+  final VoidCallback onLogin;
   final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthController>().user;
+    final auth = context.watch<AuthController>();
+    final user = auth.user;
     final theme = Theme.of(context);
+    final guest = !auth.isAuthenticated;
+
     return Drawer(
       child: SafeArea(
         child: Column(
@@ -31,11 +36,38 @@ class AppDrawer extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
               color: AlkostoColors.navy,
-              child: user == null
-                  ? const SizedBox(height: 72)
+              child: guest
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Colors.white24,
+                          child: Icon(Icons.person_outline, color: Colors.white, size: 30),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Invitado',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Mira productos sin cuenta. Inicia sesión para comprar.',
+                          style: TextStyle(color: Colors.white70, fontSize: 12.5),
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: onLogin,
+                          child: const Text('Iniciar sesión'),
+                        ),
+                      ],
+                    )
                   : Row(
                       children: [
-                        UserAvatar(user: user, radius: 30),
+                        UserAvatar(user: user!, radius: 30),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
@@ -84,14 +116,27 @@ class AppDrawer extends StatelessWidget {
             ),
             const Spacer(),
             const Divider(height: 1),
-            ListTile(
-              leading: Icon(Icons.logout, color: theme.colorScheme.error),
-              title: Text(
-                'Cerrar sesión',
-                style: TextStyle(color: theme.colorScheme.error),
+            if (guest)
+              ListTile(
+                leading: const Icon(Icons.login, color: AlkostoColors.orangeDark),
+                title: const Text(
+                  'Iniciar sesión',
+                  style: TextStyle(
+                    color: AlkostoColors.orangeDark,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                onTap: onLogin,
+              )
+            else
+              ListTile(
+                leading: Icon(Icons.logout, color: theme.colorScheme.error),
+                title: Text(
+                  'Cerrar sesión',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+                onTap: onLogout,
               ),
-              onTap: onLogout,
-            ),
           ],
         ),
       ),

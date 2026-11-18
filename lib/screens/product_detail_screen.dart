@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/auth_gate.dart';
 import '../core/feedback.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
@@ -26,6 +27,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Future<void> _add() async {
     if (!item.inStock) return;
+    final allowed = await ensureAuthenticated(
+      context,
+      message: 'Inicia sesión o crea una cuenta para agregar productos al carrito.',
+    );
+    if (!allowed || !mounted) return;
     setState(() => _adding = true);
     try {
       await context.read<CartController>().add(

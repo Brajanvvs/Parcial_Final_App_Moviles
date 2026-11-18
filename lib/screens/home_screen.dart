@@ -1,8 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/auth_gate.dart';
 import '../core/feedback.dart';
 import '../core/theme.dart';
 import '../data/showcase_catalog.dart';
@@ -13,9 +12,8 @@ import '../widgets/promo_carousel.dart';
 import 'product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.searchController, this.onOpenSearch});
+  const HomeScreen({super.key, this.onOpenSearch});
 
-  final TextEditingController? searchController;
   final VoidCallback? onOpenSearch;
 
   @override
@@ -23,35 +21,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late final TextEditingController _search =
-      widget.searchController ?? TextEditingController();
-  Timer? _debounce;
   int? _categoryId;
-  String _query = '';
-  bool _ownsSearch = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _ownsSearch = widget.searchController == null;
-    _search.addListener(_onSearchChanged);
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _search.removeListener(_onSearchChanged);
-    if (_ownsSearch) _search.dispose();
-    super.dispose();
-  }
-
-  void _onSearchChanged() {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 250), () {
-      if (!mounted) return;
-      setState(() => _query = _search.text.trim());
-    });
-  }
 
   void _selectCategory(int? id) {
     setState(() => _categoryId = id);
@@ -64,6 +34,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _quickAdd(CatalogItem item) async {
+    final allowed = await ensureAuthenticated(
+      context,
+      message: 'Inicia sesión o crea una cuenta para agregar productos al carrito.',
+    );
+    if (!allowed || !mounted) return;
     try {
       await context.read<CartController>().add(
         productId: item.remoteProductId,
@@ -78,9 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<CatalogItem> get _filtered =>
-      ShowcaseCatalog.search(query: _query, categoryId: _categoryId);
+      ShowcaseCatalog.search(categoryId: _categoryId);
 
-  bool get _isFiltering => _query.isNotEmpty || _categoryId != null;
+  bool get _isFiltering => _categoryId != null;
 
   @override
   Widget build(BuildContext context) {
@@ -113,25 +88,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
                 child: Row(
                   children: [
-                    Expanded(
+                    const Expanded(
                       child: Text(
-                        _query.isEmpty
-                            ? 'Resultados por categoría'
-                            : 'Resultados para "$_query"',
-                        style: const TextStyle(
+                        'Resultados por categoría',
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
                         ),
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
-                        _search.clear();
-                        setState(() {
-                          _query = '';
-                          _categoryId = null;
-                        });
-                      },
+                      onPressed: () => setState(() => _categoryId = null),
                       child: const Text('Limpiar'),
                     ),
                   ],

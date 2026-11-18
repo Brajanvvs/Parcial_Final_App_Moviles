@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme.dart';
-import 'screens/login_screen.dart';
 import 'screens/main_shell.dart';
 import 'screens/splash_screen.dart';
 import 'state/auth_controller.dart';
@@ -45,10 +44,11 @@ class _ShopAppState extends State<ShopApp> {
             title: 'DesCuento!',
             debugShowCheckedModeBanner: false,
             theme: buildTheme(),
+            // Invitados pueden ver el catálogo; el login se pide al comprar.
             home: switch (auth.status) {
               AuthStatus.unknown => const SplashScreen(),
-              AuthStatus.authenticated => const MainShell(),
-              AuthStatus.unauthenticated => const LoginScreen(),
+              AuthStatus.authenticated ||
+              AuthStatus.unauthenticated => const MainShell(),
             },
           );
         },

@@ -47,6 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
         usernameOrEmail: _identifier.text,
         password: _password.text,
       );
+      if (!mounted) return;
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+      }
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(
@@ -67,8 +71,17 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final canPop = Navigator.of(context).canPop();
     return Scaffold(
       backgroundColor: AlkostoColors.surface,
+      appBar: canPop
+          ? AppBar(
+              backgroundColor: AlkostoColors.surface,
+              foregroundColor: AlkostoColors.ink,
+              elevation: 0,
+              title: const Text('Iniciar sesión'),
+            )
+          : null,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

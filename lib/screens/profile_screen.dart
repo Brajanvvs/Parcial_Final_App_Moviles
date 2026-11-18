@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/api_exception.dart';
+import '../core/auth_gate.dart';
 import '../core/feedback.dart';
+import '../core/theme.dart';
 import '../core/validators.dart';
 import '../models/user.dart';
 import '../state/auth_controller.dart';
@@ -157,8 +159,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthController>().user;
-    if (user == null) return const Center(child: CircularProgressIndicator());
+    final auth = context.watch<AuthController>();
+    final user = auth.user;
+    if (!auth.isAuthenticated || user == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.person_outline, size: 64, color: AlkostoColors.blue),
+              const SizedBox(height: 12),
+              const Text(
+                'Tu perfil',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Inicia sesión para ver y editar tus datos.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => ensureAuthenticated(
+                  context,
+                  message: 'Inicia sesión para ver y editar tu perfil.',
+                ),
+                child: const Text('Iniciar sesión'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final syncKey =
         '${user.firstName}|${user.lastName}|${user.username}|${user.email}';
     if (!_dirty && syncKey != _syncedKey) {
